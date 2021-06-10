@@ -5,6 +5,11 @@ Changelog for package tracking_pid
 Forthcoming
 -----------
 
+1.9.0 (2021-06-10)
+------------------
+* Maparobo fork created
+* Remove unnecessary files
+
 1.0.0 (2019-04-19)
 ------------------
 * Add Apache 2.0 as license as per ROSIN
