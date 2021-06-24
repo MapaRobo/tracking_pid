@@ -115,12 +115,13 @@ void poseCallback()
 
   if (!waiting_for_setpoint)
   {
-    geometry_msgs::Twist cmd_vel;
+    geometry_msgs::TwistStamped cmd_vel;
     tracking_pid::PidDebug pid_debug;
     geometry_msgs::TransformStamped tfCurPoseStamped;
     tfCurPoseStamped = tf_buffer.lookupTransform(map_frame, base_link_frame, ros::Time(0));
     tfCurPose = tfCurPoseStamped.transform;
-    cmd_vel = pid_controller.update(tfCurPose, tfGoalPose, delta_t, &pid_debug);
+    cmd_vel.twist = pid_controller.update(tfCurPose, tfGoalPose, delta_t, &pid_debug);
+    cmd_vel.header.stamp = ros::Time::now();
 
     if (controller_enabled)
     {
@@ -159,7 +160,7 @@ int main(int argc, char** argv)
   waiting_for_setpoint = true;
 
   // instantiate publishers & subscribers
-  control_effort_pub = node.advertise<geometry_msgs::Twist>("move_base/cmd_vel", 1);
+  control_effort_pub = node.advertise<geometry_msgs::TwistStamped>("move_base/cmd_vel", 1);
   sub_trajectory = node.subscribe("local_trajectory", 1, trajectory_callback);
   enable_service = node.advertiseService("enable_control", enableCallback);
   enable_and_wait_service = node.advertiseService("enable_control_and_wait", enableAndWaitCallback);
