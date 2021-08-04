@@ -100,7 +100,7 @@ Visualization Manager:
       Radius: 0.0299999993
       Shaft Diameter: 0.0199999996
       Shaft Length: 0.0500000007
-      Topic: /move_base/SpiralSTC/plan
+      Topic: /move_base/BoustrophedonSTC/plan
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.100000001
