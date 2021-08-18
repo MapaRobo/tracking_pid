@@ -311,6 +311,7 @@ class InterpolatorNode(object):
 
         self._paused = False
         self._pause_sub = rospy.Subscriber("pause", Bool, self._process_pause, queue_size=1)
+        self._wait_for_replan_sub = rospy.Subscriber("interpolator/wait_for_replan", Bool, self._process_wait_for_replan, queue_size=1)
 
         self._target_x_vel = 1.0 # To be overridden by parameters
         self._target_x_acc = 0.2
@@ -354,6 +355,23 @@ class InterpolatorNode(object):
                                                          self._target_x_vel, self._target_x_acc,
                                                          self._target_yaw_vel, self._target_yaw_acc)
 
+    def continue_path_after_replan(self, start_time=None):
+        # if we're un-paused and we were busy with a section: we resume the path from the last goal send:
+        if not self._paused and self._current_section and self._latest_subgoal_pose:
+            # When we're no longer paused, continue where we left off
+            # This is: from the latest sent subgoal, to the same finish point of the current section
+            # With the same velocity so the end time will be re-calculated based on the start_time
+            rospy.loginfo("Resuming path with velocities %0.3f m/s %0.3f rad/s and accelerations %0.3f m/s2 %0.3f rad/s2", self._target_x_vel, self._target_yaw_vel, self._target_x_acc, self._target_yaw_acc)
+
+            if start_time is None:
+                start_time = self._latest_subgoal_pose.header.stamp
+
+            self._current_section = SectionInterpolation(self._latest_subgoal_pose,
+                                                         self._latest_subgoal_pose,
+                                                         start_time,
+                                                         self._target_x_vel, self._target_x_acc,
+                                                         self._target_yaw_vel, self._target_yaw_acc)
+
     def _process_pause(self, bool_msg):
         if bool_msg.data and bool_msg.data != self._paused:
             rospy.loginfo("Pausing path_interpolator")
@@ -364,6 +382,17 @@ class InterpolatorNode(object):
             resume_time = rospy.Time.now() - rospy.Duration(1.0 / self._rate)  # Prevent sending last goal again
             self._paused = bool_msg.data
             self.continue_path(start_time=resume_time)
+
+    def _process_wait_for_replan(self, bool_msg):
+        if bool_msg.data and bool_msg.data != self._paused:
+            rospy.loginfo("Pausing path_interpolator. Waiting for replan...")
+            rospy.logwarn("No acceleration limits implemented when pausing!")
+            self._paused = bool_msg.data
+        elif not bool_msg.data and bool_msg.data != self._paused:
+            rospy.loginfo("Unpausing path_interpolator. A replan must be done.")
+            resume_time = rospy.Time.now() - rospy.Duration(1.0 / self._rate)  # Prevent sending last goal again
+            self._paused = bool_msg.data
+            self.continue_path_after_replan(start_time=resume_time)
 
     def _process_velocity(self, config, _):
         target_x_vel = config.target_x_vel
