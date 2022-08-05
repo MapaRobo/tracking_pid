@@ -366,8 +366,8 @@ class InterpolatorNode(object):
             if start_time is None:
                 start_time = self._latest_subgoal_pose.header.stamp
 
-            self._current_section = SectionInterpolation(self._latest_subgoal_pose,
-                                                         self._latest_subgoal_pose,
+            self._current_section = SectionInterpolation(self._current_section.section_end_pose_stamped,
+                                                         self._current_section.section_end_pose_stamped,
                                                          start_time,
                                                          self._target_x_vel, self._target_x_acc,
                                                          self._target_yaw_vel, self._target_yaw_acc)
@@ -578,7 +578,7 @@ class InterpolatorNode(object):
         m.color.a = 1.0
         m.pose = pose_stamped.pose
         m.header = pose_stamped.header
-        m.type = Marker.SPHERE
+        m.type = Marker.CUBE
         m.scale.x = 0.2
         m.scale.y = 0.2
         m.scale.z = 0.2
